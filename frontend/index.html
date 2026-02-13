@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mi Prueba Tecnica</title>
+</head>
+<body>
+
+    <h1>Informacion de mi GitHub</h1>
+
+    <p>Nombre de usuario: <b id="usuario">Cargando...</b></p>
+    
+    <p>Cantidad de repositorios: <b id="total">0</b></p>
+
+    <hr>
+
+    <h3>Lista de Repositorios:</h3>
+    <ul id="lista"></ul>
+
+    <script>
+        // Hacemos la peticion a nuestro backend (puerto 3000)
+        fetch('http://localhost:3000/api/github')
+            .then(function(respuesta) {
+                return respuesta.json(); // Convertimos la respuesta a JSON
+            })
+            .then(function(datos) {
+                // 1. Ponemos el nombre de usuario en el HTML
+                document.getElementById('usuario').innerText = datos.user.login;
+
+                // 2. Ponemos el total de repositorios
+                document.getElementById('total').innerText = datos.repos.length;
+
+                // 3. Recorremos los repositorios para hacer la lista
+                var listaUl = document.getElementById('lista');
+                
+                datos.repos.forEach(function(repo) {
+                    // Creamos un elemento de lista <li>
+                    var elemento = document.createElement('li');
+                    
+                    // Le ponemos el texto: Nombre + Estrellas
+                    elemento.innerText = repo.name + " - ⭐ " + repo.stargazers_count;
+                    
+                    // Lo agregamos a la lista principal
+                    listaUl.appendChild(elemento);
+                });
+            })
+            .catch(function(error) {
+                console.log("Hubo un error al cargar:", error);
+            });
+    </script>
+
+</body>
+</html>
