@@ -4,40 +4,42 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
-
 app.use(cors());
 
-app.get('/api/github', (req, res) => {
-    const token = process.env.GITHUB_TOKEN;
-    const config = { 
-        headers: { Authorization: 'Bearer ' + token } 
-    };
+app.get('/api/github', async (req, res) => {
+    try {
+        const usarEnv = req.headers['x-use-env'] === 'true';
+        const tokenManual = req.headers['x-github-token'];
+        const token = usarEnv ? process.env.GITHUB_TOKEN : tokenManual;
+        console.log('Usando token:', usarEnv ? 'ENV' : 'Manual');
 
-    // Primero pedimos el usuario
-    axios.get('https://api.github.com/user', config)
-        .then(userRes => {
-            const userData = userRes.data;
+        if (!token) {
+            return res.status(400).json({ error: 'Token no proporcionado' });
+        }
 
-            // Luego pedimos los repositorios
-            axios.get('https://api.github.com/user/repos', config)
-                .then(reposRes => {
-                    const reposData = reposRes.data;
+        const config = {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        };
 
-                    // Al final, enviamos todo junto
-                    res.json({
-                        user: userData,
-                        repos: reposData
-                    });
-                })
-                .catch(err => {
-                    res.status(500).send('Error en repositorios');
-                });
-        })
-        .catch(err => {
-            res.status(500).send('Error en perfil de usuario');
+        const userRes = await axios.get('https://api.github.com/user', config);
+        const reposRes = await axios.get('https://api.github.com/user/repos', config);
+        console.log('Datos recibidos de GitHub:', {
+            user: userRes.data,
+            repos: reposRes.data
         });
+
+        res.json({
+            user: userRes.data,
+            repos: reposRes.data
+        });
+
+    } catch (error) {
+        res.status(500).json({ error: 'Error consultando GitHub' });
+    }
 });
 
 app.listen(3000, () => {
-    console.log('Servidor listo en el puerto 3000');
+    console.log('Servidor listo en http://localhost:3000');
 });

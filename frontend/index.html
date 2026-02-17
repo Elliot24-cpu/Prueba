@@ -1,50 +1,186 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>Mi Prueba Tecnica</title>
-</head>
-<body>
+    <meta charset="UTF-8" />
+    <title>GitHub Viewer</title>
 
-    <h1>Informacion de mi GitHub</h1>
 
-    <p>Nombre de usuario: <b id="usuario">Cargando...</b></p>
-    
-    <p>Cantidad de repositorios: <b id="total">0</b></p>
-
-    <hr>
-
-    <h3>Lista de Repositorios:</h3>
-    <ul id="lista"></ul>
-
+    <script src="https://cdn.tailwindcss.com"></script>
     <script>
-        // Hacemos la peticion a nuestro backend (puerto 3000)
-        fetch('http://localhost:3000/api/github')
-            .then(function(respuesta) {
-                return respuesta.json(); // Convertimos la respuesta a JSON
-            })
-            .then(function(datos) {
-                // 1. Ponemos el nombre de usuario en el HTML
-                document.getElementById('usuario').innerText = datos.user.login;
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
 
-                // 2. Ponemos el total de repositorios
-                document.getElementById('total').innerText = datos.repos.length;
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
 
-                // 3. Recorremos los repositorios para hacer la lista
-                var listaUl = document.getElementById('lista');
-                
-                datos.repos.forEach(function(repo) {
-                    // Creamos un elemento de lista <li>
-                    var elemento = document.createElement('li');
-                    
-                    // Le ponemos el texto: Nombre + Estrellas
-                    elemento.innerText = repo.name + " - ⭐ " + repo.stargazers_count;
-                    
-                    // Lo agregamos a la lista principal
-                    listaUl.appendChild(elemento);
-                });
-            })
-            .catch(function(error) {
-                console.log("Hubo un error al cargar:", error);
+<body class="bg-gray-100 dark:bg-gray-900 dark:text-white min-h-screen transition-colors duration-300">
+
+    <nav class="bg-gray-900 text-white px-6 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+            <img src="https://i.postimg.cc/66SKYF2N/QR-San-Valentin-especificado-(2).png" alt="Logo de GitHub" class="w-8 h-8 object-contain">
+            <span class="font-semibold text-lg">GitHub Viewer</span>
+
+            <ul class="hidden md:flex gap-4 text-sm ml-6">
+                <li class="hover:text-gray-300 cursor-pointer">Dashboard</li>
+                <li class="hover:text-gray-300 cursor-pointer">Repositorios</li>
+                <li class="hover:text-gray-300 cursor-pointer">Ajustes</li>
+            </ul>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <button 
+                id="btn-dark-mode" 
+                class="bg-gray-700 hover:bg-gray-600 text-white px-3 py-1 rounded text-sm transition-colors font-medium"
+            >
+                Modo Victor
+            </button>
+                <i data-lucide="bell" class="w-5 h-5 cursor-pointer"></i>
+            <img 
+                id="avatar-perfil"
+                src="https://avatars.githubusercontent.com/u/1?v=4" 
+                class="w-8 h-8 rounded-full border border-gray-600"
+                alt="avatar"
+            />
+        </div>
+    </nav>
+
+
+    <main class="flex justify-center p-6">
+        <div class="bg-white dark:bg-gray-800 w-full max-w-3xl rounded-lg shadow-md p-6 transition-colors duration-300">
+
+            <h1 class="text-2xl font-bold flex items-center gap-2 mb-4">
+                <i data-lucide="user"></i>
+                Perfil de GitHub
+            </h1>
+
+
+            <div class="mb-4 space-y-2">
+                <label class="flex items-center gap-2 text-sm">
+                    <input type="checkbox" id="useEnv" checked />
+                    Token desde variable de entorno (.env)
+                </label>
+
+                <input
+                    type="password"
+                    id="tokenInput"
+                    placeholder="Pega tu GitHub Token aquí"
+                    class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded px-3 py-2 text-sm hidden transition-colors"
+                />
+            </div>
+
+            <button
+                onclick="cargarGitHub()"
+                class="bg-gray-900 text-white px-4 py-2 rounded hover:bg-gray-800 text-sm flex items-center gap-2"
+            >
+                <i data-lucide="download"></i>
+                Cargar información
+            </button>
+
+            <hr class="my-6" />
+
+
+            <div id="info" class="hidden">
+                <p class="text-sm">
+                    Usuario: <b id="usuario"></b>
+                </p>
+                <p class="text-sm mb-4">
+                    Repositorios: <b id="total"></b>
+                </p>
+
+                <ul id="lista" class="space-y-2"></ul>
+            </div>
+        </div>
+    </main>
+
+<script>
+    // Inicializar iconos
+    lucide.createIcons();
+
+    const checkbox = document.getElementById('useEnv');
+    const tokenInput = document.getElementById('tokenInput');
+
+    // Mostrar / ocultar input del token
+    checkbox.addEventListener('change', () => {
+        tokenInput.classList.toggle('hidden', checkbox.checked);
+    });
+
+    function cargarGitHub() {
+        const usarEnv = checkbox.checked;
+        const token = tokenInput.value;
+
+        fetch('http://localhost:3000/api/github', {
+            headers: {
+                'x-use-env': usarEnv,
+                'x-github-token': token
+            }
+        })
+        .then(res => {
+            if (!res.ok) {
+                throw new Error('Error en la respuesta del servidor');
+            }
+            return res.json();
+        })
+        .then(datos => {
+            document.getElementById('info').classList.remove('hidden');
+            document.getElementById('usuario').innerText = datos.user.login;
+            document.getElementById('total').innerText = datos.repos.length;
+            document.getElementById('avatar-perfil').src = datos.user.avatar_url;
+
+            const lista = document.getElementById('lista');
+            lista.innerHTML = '';
+
+            datos.repos.forEach(repo => {
+                const li = document.createElement('li');
+                // Agregamos clases "dark:" para el borde y el hover
+                li.className = "border dark:border-gray-700 rounded p-3 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-300";
+
+                // Agregamos clases "dark:" para el texto de los enlaces y las estrellas
+                li.innerHTML = `
+                    <a 
+                        href="${repo.html_url}" 
+                        target="_blank"
+                        class="font-medium text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                    >
+                        <i data-lucide="book"></i>
+                        ${repo.name}
+                    </a>
+
+                    <span class="text-sm flex items-center gap-1">
+                        <i data-lucide="star"
+                           class="${repo.stargazers_count > 0 
+                                ? 'text-yellow-400 fill-yellow-400' 
+                                : 'text-gray-400 dark:text-gray-500'}">
+                        </i>
+                        ${repo.stargazers_count}
+                    </span>
+                `;
+
+                lista.appendChild(li);
+            });
+
+            // Renderizar iconos dinámicos
+            lucide.createIcons();
+        })
+        .catch(error => {
+            console.error(error);
+            alert('Error cargando GitHub');
+        });
+    }
+            // === LÓGICA DEL MODO OSCURO ===
+            const btnDarkMode = document.getElementById('btn-dark-mode');
+            const htmlElement = document.documentElement;
+
+            btnDarkMode.addEventListener('click', () => {
+                htmlElement.classList.toggle('dark');
+    
+                // Verificamos si está oscuro para cambiar el texto
+                if (htmlElement.classList.contains('dark')) {
+                    btnDarkMode.innerText = 'Modo Elliot';
+                } else {
+                    btnDarkMode.innerText = 'Modo Victor';
+                }
             });
     </script>
 
