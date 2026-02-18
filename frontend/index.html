@@ -4,14 +4,12 @@
     <meta charset="UTF-8" />
     <title>GitHub Viewer</title>
 
-
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             darkMode: 'class',
         }
     </script>
-
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 
@@ -36,7 +34,7 @@
             >
                 Modo Victor
             </button>
-                <i data-lucide="bell" class="w-5 h-5 cursor-pointer"></i>
+            <i data-lucide="bell" class="w-5 h-5 cursor-pointer"></i>
             <img 
                 id="avatar-perfil"
                 src="https://avatars.githubusercontent.com/u/1?v=4" 
@@ -55,9 +53,8 @@
                 Perfil de GitHub
             </h1>
 
-
             <div class="mb-4 space-y-2">
-                <label class="flex items-center gap-2 text-sm">
+                <label class="flex items-center gap-2 text-sm dark:text-gray-300">
                     <input type="checkbox" id="useEnv" checked />
                     Token desde variable de entorno (.env)
                 </label>
@@ -72,43 +69,36 @@
 
             <button
                 onclick="cargarGitHub()"
-                class="bg-gray-900 text-white px-4 py-2 rounded hover:bg-gray-800 text-sm flex items-center gap-2"
+                class="bg-gray-900 text-white px-4 py-2 rounded hover:bg-gray-800 text-sm flex items-center gap-2 transition-colors"
             >
                 <i data-lucide="download"></i>
                 Cargar información
             </button>
 
-            <hr class="my-6" />
-
+            <hr class="my-6 border-gray-200 dark:border-gray-700 transition-colors" />
 
             <div id="info" class="hidden">
-                <p class="text-sm">
-                    Usuario: <b id="usuario"></b>
-                </p>
-                <p class="text-sm mb-4">
-                    Repositorios: <b id="total"></b>
-                </p>
-
+                <p class="text-sm">Usuario: <b id="usuario"></b></p>
+                <p class="text-sm mb-4">Repositorios: <b id="total"></b></p>
                 <ul id="lista" class="space-y-2"></ul>
             </div>
         </div>
     </main>
 
 <script>
-    // Inicializar iconos
     lucide.createIcons();
 
     const checkbox = document.getElementById('useEnv');
     const tokenInput = document.getElementById('tokenInput');
 
-    // Mostrar / ocultar input del token
+    // Mostrar / ocultar input del token manual
     checkbox.addEventListener('change', () => {
         tokenInput.classList.toggle('hidden', checkbox.checked);
     });
 
     function cargarGitHub() {
         const usarEnv = checkbox.checked;
-        const token = tokenInput.value;
+        const token = tokenInput.value.trim();
 
         fetch('http://localhost:3000/api/github', {
             headers: {
@@ -133,56 +123,42 @@
 
             datos.repos.forEach(repo => {
                 const li = document.createElement('li');
-                // Agregamos clases "dark:" para el borde y el hover
                 li.className = "border dark:border-gray-700 rounded p-3 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors duration-300";
 
-                // Agregamos clases "dark:" para el texto de los enlaces y las estrellas
                 li.innerHTML = `
-                    <a 
-                        href="${repo.html_url}" 
-                        target="_blank"
-                        class="font-medium text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
-                    >
-                        <i data-lucide="book"></i>
-                        ${repo.name}
+                    <a href="${repo.html_url}" target="_blank" class="font-medium text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
+                        <i data-lucide="book"></i> ${repo.name}
                     </a>
-
                     <span class="text-sm flex items-center gap-1">
-                        <i data-lucide="star"
-                           class="${repo.stargazers_count > 0 
-                                ? 'text-yellow-400 fill-yellow-400' 
-                                : 'text-gray-400 dark:text-gray-500'}">
-                        </i>
+                        <i data-lucide="star" class="${repo.stargazers_count > 0 ? 'text-yellow-400 fill-yellow-400' : 'text-gray-400 dark:text-gray-500'}"></i>
                         ${repo.stargazers_count}
                     </span>
                 `;
-
                 lista.appendChild(li);
             });
 
-            // Renderizar iconos dinámicos
             lucide.createIcons();
         })
         .catch(error => {
             console.error(error);
-            alert('Error cargando GitHub');
+            alert('Error cargando GitHub. Revisa tu token.');
         });
     }
-            // === LÓGICA DEL MODO OSCURO ===
-            const btnDarkMode = document.getElementById('btn-dark-mode');
-            const htmlElement = document.documentElement;
 
-            btnDarkMode.addEventListener('click', () => {
-                htmlElement.classList.toggle('dark');
-    
-                // Verificamos si está oscuro para cambiar el texto
-                if (htmlElement.classList.contains('dark')) {
-                    btnDarkMode.innerText = 'Modo Elliot';
-                } else {
-                    btnDarkMode.innerText = 'Modo Victor';
-                }
-            });
-    </script>
+    // === LÓGICA DEL MODO OSCURO ===
+    const btnDarkMode = document.getElementById('btn-dark-mode');
+    const htmlElement = document.documentElement;
+
+    btnDarkMode.addEventListener('click', () => {
+        htmlElement.classList.toggle('dark');
+        
+        if (htmlElement.classList.contains('dark')) {
+            btnDarkMode.innerText = 'Modo Elliot';
+        } else {
+            btnDarkMode.innerText = 'Modo Victor';
+        }
+    });
+</script>
 
 </body>
 </html>

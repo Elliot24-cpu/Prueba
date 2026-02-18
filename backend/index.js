@@ -8,8 +8,11 @@ app.use(cors());
 
 app.get('/api/github', async (req, res) => {
     try {
+        // Leemos las decisiones del frontend
         const usarEnv = req.headers['x-use-env'] === 'true';
         const tokenManual = req.headers['x-github-token'];
+        
+        // Decidimos qué token usar
         const token = usarEnv ? process.env.GITHUB_TOKEN : tokenManual;
         console.log('Usando token:', usarEnv ? 'ENV' : 'Manual');
 
@@ -23,12 +26,13 @@ app.get('/api/github', async (req, res) => {
             }
         };
 
-        const userRes = await axios.get('https://api.github.com/user', config);
-        const reposRes = await axios.get('https://api.github.com/user/repos', config);
-        console.log('Datos recibidos de GitHub:', {
-            user: userRes.data,
-            repos: reposRes.data
-        });
+        // Hacemos ambas peticiones al mismo tiempo para que sea rápido
+        const [userRes, reposRes] = await Promise.all([
+            axios.get('https://api.github.com/user', config),
+            axios.get('https://api.github.com/user/repos', config)
+        ]);
+
+        console.log('Datos enviados al frontend con éxito.');
 
         res.json({
             user: userRes.data,
@@ -36,6 +40,7 @@ app.get('/api/github', async (req, res) => {
         });
 
     } catch (error) {
+        console.error('Error consultando GitHub:', error.message);
         res.status(500).json({ error: 'Error consultando GitHub' });
     }
 });
