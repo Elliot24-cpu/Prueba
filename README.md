@@ -1,8 +1,8 @@
-# GitHub Profile Viewer 🚀
+# GitHub Profile Viewer 
 
 Esta aplicación Full-Stack permite visualizar perfiles y repositorios de GitHub.
 
-## ✨ Características Principales
+##  Características Principales
 
 - **Búsqueda Dual Dinámica:** El usuario puede alternar entre cargar su información personal preconfigurada o buscar cualquier usuario público de GitHub mediante un input de texto.
 - **Tema Personalizado (Dark/Light):** Implementación de un modo oscuro ("Modo Elliot / Modo Victor") utilizando Tailwind CSS.
@@ -10,7 +10,7 @@ Esta aplicación Full-Stack permite visualizar perfiles y repositorios de GitHub
 
 ---
 
-## 🧠 ¿Cómo funciona el código internamente?
+## ¿Cómo funciona el código internamente?
 
 ### 1. El Frontend (`index.html`)
 Está construido con HTML y JavaScript. Su trabajo principal es la recolección de datos y la actualización del DOM:
@@ -27,7 +27,7 @@ Construido sobre Node.js y Express, actúa como un intermediario seguro y optimi
 
 ---
 
-## 🛠️ Tecnologías Utilizadas
+## Tecnologías Utilizadas
 
 - **Frontend:** HTML5, CSS (Tailwind CSS via CDN), Vanilla JavaScript, Lucide Icons.
 - **Backend:** Node.js, Express.js.
@@ -37,7 +37,7 @@ Construido sobre Node.js y Express, actúa como un intermediario seguro y optimi
 
 ---
 
-## ⚙️ Instrucciones para ejecutar el proyecto
+## Instrucciones para ejecutar el proyecto
 
 1. Clona este repositorio en tu máquina local.
 2. Abre la terminal en la carpeta raíz del proyecto y ejecuta el siguiente comando para instalar las dependencias del servidor:
