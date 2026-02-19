@@ -38,7 +38,7 @@
             <img 
                 id="avatar-perfil"
                 src="https://avatars.githubusercontent.com/u/1?v=4" 
-                class="w-8 h-8 rounded-full border border-gray-600"
+                class="w-8 h-8 rounded-full border border-gray-600 object-cover"
                 alt="avatar"
             />
         </div>
@@ -56,13 +56,13 @@
             <div class="mb-4 space-y-2">
                 <label class="flex items-center gap-2 text-sm dark:text-gray-300">
                     <input type="checkbox" id="useEnv" checked />
-                    Token desde variable de entorno (.env)
+                    Mi Perfil (desde la variable de entorno .env)
                 </label>
 
                 <input
-                    type="password"
-                    id="tokenInput"
-                    placeholder="Pega tu GitHub Token aquí"
+                    type="text"
+                    id="usernameInput"
+                    placeholder="Escribe un usuario de GitHub"
                     class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded px-3 py-2 text-sm hidden transition-colors"
                 />
             </div>
@@ -72,7 +72,7 @@
                 class="bg-gray-900 text-white px-4 py-2 rounded hover:bg-gray-800 text-sm flex items-center gap-2 transition-colors"
             >
                 <i data-lucide="download"></i>
-                Cargar información
+                <span id="btnText">Cargar mi información</span>
             </button>
 
             <hr class="my-6 border-gray-200 dark:border-gray-700 transition-colors" />
@@ -89,26 +89,39 @@
     lucide.createIcons();
 
     const checkbox = document.getElementById('useEnv');
-    const tokenInput = document.getElementById('tokenInput');
+    const usernameInput = document.getElementById('usernameInput');
+    const btnText = document.getElementById('btnText');
 
-    // Mostrar / ocultar input del token manual
+    // Mostrar / ocultar el buscador de usuario y cambiar el texto del botón
     checkbox.addEventListener('change', () => {
-        tokenInput.classList.toggle('hidden', checkbox.checked);
+        usernameInput.classList.toggle('hidden', checkbox.checked);
+        btnText.innerText = checkbox.checked ? 'Cargar mi información' : 'Buscar usuario';
+        
+        if(checkbox.checked) usernameInput.value = ''; 
     });
 
     function cargarGitHub() {
         const usarEnv = checkbox.checked;
-        const token = tokenInput.value.trim();
+        const searchUsername = usernameInput.value.trim();
 
+        // Validación: si no usa el env, DEBE escribir un nombre de usuario
+        if (!usarEnv && !searchUsername) {
+            alert('Por favor, escribe un nombre de usuario para buscar.');
+            return;
+        }
+
+        // Enviamos la petición. Si searchUsername está vacío, no pasa nada, el back lo ignora.
         fetch('http://localhost:3000/api/github', {
             headers: {
                 'x-use-env': usarEnv,
-                'x-github-token': token
+                'x-search-username': searchUsername 
             }
         })
-        .then(res => {
+        .then(async (res) => {
             if (!res.ok) {
-                throw new Error('Error en la respuesta del servidor');
+                // Intentamos capturar el error exacto que envía el backend
+                const errorData = await res.json().catch(() => ({}));
+                throw new Error(errorData.error || 'Error en la respuesta del servidor');
             }
             return res.json();
         })
@@ -141,11 +154,11 @@
         })
         .catch(error => {
             console.error(error);
-            alert('Error cargando GitHub. Revisa tu token.');
+            alert(error.message); // Muestra el mensaje de error del backend (ej: "Usuario no encontrado")
         });
     }
 
-    // === LÓGICA DEL MODO OSCURO ===
+    // LÓGICA DEL MODO OSCURO
     const btnDarkMode = document.getElementById('btn-dark-mode');
     const htmlElement = document.documentElement;
 
@@ -156,6 +169,13 @@
             btnDarkMode.innerText = 'Modo Elliot';
         } else {
             btnDarkMode.innerText = 'Modo Victor';
+        }
+    });
+
+    
+    usernameInput.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') {
+            cargarGitHub();
         }
     });
 </script>
