@@ -8,28 +8,39 @@ app.use(cors());
 
 app.get('/api/github', async (req, res) => {
     try {
-        // Leemos las decisiones del frontend
         const usarEnv = req.headers['x-use-env'] === 'true';
-        const tokenManual = req.headers['x-github-token'];
+        const searchUsername = req.headers['x-search-username']; 
         
-        // Decidimos qué token usar
-        const token = usarEnv ? process.env.GITHUB_TOKEN : tokenManual;
-        console.log('Usando token:', usarEnv ? 'ENV' : 'Manual');
+        // 1. Siempre intentamos usar el token del .env para evitar límites de API
+        const token = process.env.GITHUB_TOKEN;
 
-        if (!token) {
-            return res.status(400).json({ error: 'Token no proporcionado' });
+        // Si el usuario quiere ver "su perfil" (checkbox activado) pero no hay token, fallamos
+        if (usarEnv && !token) {
+            return res.status(400).json({ error: 'Token no proporcionado en el archivo .env' });
         }
 
-        const config = {
-            headers: {
-                Authorization: `Bearer ${token}`
-            }
-        };
+        // Preparamos la configuración con el token (si existe)
+        const config = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
 
-        // Hacemos ambas peticiones al mismo tiempo para que sea rápido
+        let urlUser, urlRepos;
+
+        // 2. Decidimos qué URLs consultar basándonos en si hay un username a buscar
+        if (!usarEnv && searchUsername) {
+            // Buscando a otro usuario
+            console.log(`Buscando al usuario: ${searchUsername}`);
+            urlUser = `https://api.github.com/users/${searchUsername}`;
+            urlRepos = `https://api.github.com/users/${searchUsername}/repos`;
+        } else {
+            // Buscando tu propio perfil (usando el token)
+            console.log('Cargando perfil personal desde el .env');
+            urlUser = 'https://api.github.com/user';
+            urlRepos = 'https://api.github.com/user/repos';
+        }
+
+        // 3. Hacemos las peticiones
         const [userRes, reposRes] = await Promise.all([
-            axios.get('https://api.github.com/user', config),
-            axios.get('https://api.github.com/user/repos', config)
+            axios.get(urlUser, config),
+            axios.get(urlRepos, config)
         ]);
 
         console.log('Datos enviados al frontend con éxito.');
@@ -40,7 +51,11 @@ app.get('/api/github', async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Error consultando GitHub:', error.message);
+        console.error('Error consultando GitHub:', error.response ? error.response.data.message : error.message);
+        // Si el error es 404, significa que el usuario buscado no existe
+        if (error.response && error.response.status === 404) {
+            return res.status(404).json({ error: 'Usuario no encontrado' });
+        }
         res.status(500).json({ error: 'Error consultando GitHub' });
     }
 });
